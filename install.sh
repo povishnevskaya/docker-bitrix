@@ -103,7 +103,7 @@ then
     echo -e "\e[33mDocker containers is not installed. Installation starting... \e[39m\n"
 
     cd $DOCKER_PATH && \
-    #git clone https://github.com/povishnevskaya/bitrix_docker.git &&
+    git clone git@github.com:povishnevskaya/docker-bitrix.git &&
     cd $DOCKER_FOLDER_PATH
 
     echo -e "\n\e[33mCopy environment setting file and starting configuration \e[39m"
