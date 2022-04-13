@@ -78,7 +78,7 @@ then
     systemctl enable pure-ftpd.service > /dev/null 2>&1 && \
     cd /etc/pure-ftpd/ && \
     mv pure-ftpd.conf pure-ftpd.conf.old && \
-    wget https://raw.githubusercontent.com/povishnevskaya/docker-bitrix/main/pure-ftpd.conf > /dev/null 2>&1 && \
+    wget https://raw.githubusercontent.com/povishnevskaya/docker-bitrix/master/pure-ftpd.conf > /dev/null 2>&1 && \
     ufw allow from any to any port 20,21,30000:50000 proto tcp > /dev/null 2>&1 && \
     touch /etc/pure-ftpd/pureftpd.passwd && \
     pure-pw mkdb > /dev/null 2>&1 && \
