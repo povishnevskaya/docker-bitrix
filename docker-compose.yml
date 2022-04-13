@@ -1,0 +1,171 @@
+version: '2.1'
+
+volumes:
+  site:
+  db:
+    driver: local
+
+services:
+    php:
+        build: ./${PHP_VERSION}
+        container_name: ${PROJECT}php
+        volumes_from:
+            - source
+        ports:
+            - '127.0.0.1:9000:9000'
+        links:
+            - db
+            - memcached
+        networks:
+            - bitrix
+        extra_hosts:
+            - "${PROJECT}:10.100.0.88"
+        restart: always
+
+    web_server:
+        build: ./${WEB_SERVER_TYPE}
+        container_name: ${PROJECT}webserver
+        depends_on:
+            - source
+        volumes_from:
+            - source
+        ports:
+            - '${INTERFACE}:80:80'
+            - '${INTERFACE}:443:443'
+        links:
+            - php
+        networks:
+            - bitrix
+        restart: always
+    db:
+        build: ./${DB_SERVER_TYPE}
+        container_name: ${PROJECT}db
+        volumes_from:
+            - source
+        ports:
+            - '${INTERFACE}:3306:3306'
+        environment:
+            # MYSQL_DATABASE: ${MYSQL_DATABASE}
+            # MYSQL_USER: ${MYSQL_USER}
+            # MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        command: mysqld --sql-mode=""
+        networks:
+            - bitrix
+        restart: always
+    memcached:
+        image: memcached:1.5-alpine
+        container_name: ${PROJECT}memcached
+        volumes_from:
+            - source
+        ports:
+            - '${INTERFACE}:11211:11211'
+        networks:
+            - bitrix
+        restart: always
+#    es:
+#        image: docker.elastic.co/elasticsearch/elasticsearch:7.6.0
+#        container_name: ${PROJECT}es
+#        restart: unless-stopped
+#        ports:
+#        - '127.0.0.1:9200:9200'
+#        - '127.0.0.1:9300:9300'
+#        - '${INTERFACE}:9299:9200'
+#        - '${INTERFACE}:9399:9300'
+#        environment:
+#            - cluster.name=web
+#            - node.name=${PROJECT}es
+#            - bootstrap.memory_lock=true
+#            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#            - http.cors.allow-origin=*
+#            - http.cors.enabled=true
+#
+#    #        - xpack.security.enabled=false
+#    #        - xpack.monitoring.enabled=false
+#    #        - xpack.graph.enabled=false
+#    #        - xpack.watcher.enabled=false
+#            - discovery.type=single-node
+#    #        - discovery.type=zen
+#    #        - cluster.initial_master_nodes=${PROJECT}es
+#    #        - discovery.zen.ping.unicast.hosts=192.168.101.77
+#           #- network.host=172.20.1.1
+#    #        - transport.publish_host=192.168.101.96
+#            - node.master=true
+#            - node.data=true
+#        ulimits:
+#            memlock:
+#                soft: -1
+#                hard: -1
+#        #mem_limit: 3g
+#        cap_add:
+#            - IPC_LOCK
+#        healthcheck:
+#            test: curl -s https://127.0.0.1:9200 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+#            interval: 30s
+#            timeout: 10s
+#            retries: 5
+#        volumes:
+#            - ./data/esdata:/var/lib/elasticsearch/esdata
+#            #- ./analysis:/usr/share/elasticsearch/config/analysis
+#        logging:
+#            driver: "json-file"
+#            options:
+#                max-size: "10m"
+#                max-file: "10"
+#        networks:
+#            - bitrix
+    adminer:
+        image: dockette/adminer:full
+        container_name: ${PROJECT}adminer
+        links:
+            - db:db
+        ports:
+            - '${INTERFACE}:8080:80'
+        environment:
+            UPLOAD: 1024M # upload_max_filesize, post_max_size
+        networks:
+            - bitrix
+    #sphinx:
+    #    image: registry.gitlab.com/vitams/docker.my-site.ru/sphinx:${HASH}
+    #    links:
+    #      - mysql
+    #    depends_on:
+    #      - mysql
+    #    volumes:
+    #        - /etc/localtime:/etc/localtime:ro
+    #    networks:
+    #        - bitrix
+    #    restart: unless-stopped
+    #smtp:
+    #    image: registry.gitlab.com/vitams/docker.my-site.ru/smtp:${HASH}
+    #    environment:
+    #        MAILNAME: "bitrix"
+    #        RELAY_NETWORKS: ":10.100.0.0/24"
+    #        IGNORE_LIMITS: "true"
+    #    volumes:
+    #        - /etc/localtime:/etc/localtime:ro
+    #    networks:
+    #        - bitrix
+    #    restart: unless-stopped
+    source:
+        image: alpine:latest
+        container_name: ${PROJECT}source
+        volumes:
+            - ./logs/${WEB_SERVER_TYPE}:/var/log/${WEB_SERVER_TYPE}
+            - ./logs/php:/var/log/php
+            - ./logs/db:/var/log/mysql
+            - ./logs/memcached:/var/log/memcached
+            - db:/var/lib/mysql
+            - ./data/memcached:/var/lib/memcached
+            - ./www/html:/var/www/html
+            - ${SITE_PATH}:/home/bitrix
+            - /etc/localtime:/etc/localtime/:ro
+        networks:
+            - bitrix
+networks:
+    bitrix:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 10.100.0.0/24

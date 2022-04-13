@@ -1,0 +1,103 @@
+server {
+    listen 80;
+    #listen [::]:80 deferred reuseport default;
+
+    server_name #SITE_NAME# www.#SITE_NAME#;
+    charset utf-8;
+    root #SITE_PATH#;
+    index index.php index.html bitrixsetup.php restore.php;
+
+    access_log /var/log/nginx/#SITE_NAME#-access.log;
+    error_log /var/log/nginx/#SITE_NAME#-error.log;
+
+    add_header X-Content-Type-Options nosniff;
+
+    if (!-e $request_filename) {
+       rewrite  ^(.*)$  /bitrix/urlrewrite.php last;
+    }
+
+    rewrite ^([^.]*?\/)\/+(.*)$ $1$2 permanent;
+
+    if ($request_uri ~* "^(.*/)index\.php$") {
+        return 301 $1;
+    }
+
+    location / {
+        if (-f #SITE_PATH#/index.php) {
+            root #SITE_PATH#;
+            break;
+        }
+        if (-f #SITE_PATH#/bitrixsetup.php) {
+            root #SITE_PATH#;
+            break;
+        }
+        if (-f #SITE_PATH#/restore.php) {
+            root #SITE_PATH#;
+            break;
+        }
+        try_files $uri $uri/ @bitrix;
+        root  #SITE_PATH#;
+    }
+
+    location @bitrix {
+        fastcgi_pass php-upstream;
+        include fastcgi_params;
+        fastcgi_param SERVER_NAME $host;
+        fastcgi_param SCRIPT_FILENAME $document_root/bitrix/urlrewrite.php;
+    }
+
+    location = /restore.php {
+        include fastcgi_params;
+        fastcgi_pass php-upstream;
+        fastcgi_index index.php;
+        fastcgi_send_timeout 21600;
+        fastcgi_read_timeout 21600;
+        fastcgi_param SERVER_NAME $host;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        client_body_buffer_size 1024m;
+        client_max_body_size 1024m;
+    }
+
+    location = /favicon.png {
+        log_not_found off;
+        access_log off;
+    }
+
+    location = /robots.txt {
+        log_not_found off;
+        access_log off;
+    }
+
+    location ~ (/\.ht|/\.git|/\.gitignore|/vendor/|/composer|/bitrix/updates|/bitrix/modules|/upload/support/not_image|/upload/1c_exchange|/bitrix/php_interface|local/modules|local/php_interface|/logs/) {
+        deny all;
+    }
+
+    location ~* ^.+\.(jpg|jpeg|gif|png|svg|js|css|mp3|ogg|mpe?g|avi|zip|gz|bz2?|rar|eot|otf|ttf|woff|woff2)$ {
+        log_not_found off;
+        access_log off;
+        expires 30d;
+        add_header Cache-Control public;
+        add_header X-Content-Type-Options nosniff;
+    }
+
+    location ~ /upload/ {
+        client_body_buffer_size 1024m;
+        client_max_body_size 1024m;
+    }
+
+    location ~ \.php$ {
+        if (!-f $request_filename) {
+          rewrite  ^(.*)/index.php$  $1/ redirect;
+        }
+        include fastcgi_params;
+        fastcgi_pass php-upstream;
+        fastcgi_index index.php;
+        fastcgi_send_timeout 21600;
+        fastcgi_read_timeout 21600;
+        fastcgi_param SERVER_NAME $host;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    error_page 404 /404.html;
+    location /404.html {}
+}
