@@ -97,13 +97,13 @@ then
   fi
 
   # downloading docker from git source
-  DOCKER_FOLDER_PATH=$DOCKER_PATH/bitrix_docker
+  DOCKER_FOLDER_PATH=$DOCKER_PATH/docker-bitrix
   if [ ! -d "$DOCKER_FOLDER_PATH" ]
   then
     echo -e "\e[33mDocker containers is not installed. Installation starting... \e[39m\n"
 
     cd $DOCKER_PATH && \
-    git clone git@github.com:povishnevskaya/docker-bitrix.git &&
+    git clone https://github.com/povishnevskaya/docker-bitrix.git &&
     cd $DOCKER_FOLDER_PATH
 
     echo -e "\n\e[33mCopy environment setting file and starting configuration \e[39m"
@@ -231,10 +231,10 @@ then
         then
             docker exec -it darbit_docker_webserver /bin/bash -c "certbot --nginx -d $SITE_NAME -d www.$SITE_NAME"
 
-            DOCKER_FOLDER_PATH=$DOCKER_PATH/bitrix_docker
+            DOCKER_FOLDER_PATH=$DOCKER_PATH/docker-bitrix
             mv $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf.old && \
-            docker cp bitrix_docker_webserver:/etc/nginx/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/ && \
-            docker cp bitrix_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
+            docker cp docker-bitrix_webserver:/etc/nginx/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/ && \
+            docker cp docker-bitrix_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
         fi
     fi
 
@@ -358,12 +358,12 @@ then
 
         if [[ $SSL_INSTALL_ACTION == "Y" ]]
         then
-            docker exec -it bitrix_docker_webserver /bin/bash -c "certbot --nginx -d $SITE_NAME -d www.$SITE_NAME"
+            docker exec -it docker-bitrix_webserver /bin/bash -c "certbot --nginx -d $SITE_NAME -d www.$SITE_NAME"
 
-            DOCKER_FOLDER_PATH=$DOCKER_PATH/bitrix_docker
+            DOCKER_FOLDER_PATH=$DOCKER_PATH/docker-bitrix
             mv $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf.old && \
-            docker cp bitrix_docker_webserver:/etc/nginx/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/ && \
-            docker cp bitrix_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
+            docker cp docker-bitrix_webserver:/etc/nginx/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/ && \
+            docker cp docker-bitrix_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
         fi
     fi
   fi
@@ -411,10 +411,10 @@ then
     rm -rf $WEBSITE_FILES_PATH
     echo -e "\e[32mWebsite folder removed \e[39m\n"
 
-    DOCKER_FOLDER_PATH=$DOCKER_PATH/bitrix_docker
+    DOCKER_FOLDER_PATH=$DOCKER_PATH/docker-bitrix
 
-    docker exec -it bitrix_docker_webserver /bin/bash -c "certbot delete --cert-name $SITE_NAME" && \
-    docker cp bitrix_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
+    docker exec -it docker-bitrix_webserver /bin/bash -c "certbot delete --cert-name $SITE_NAME" && \
+    docker cp docker-bitrix_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
 
     rm -rf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf
 
