@@ -229,7 +229,7 @@ then
 
         if [[ $SSL_INSTALL_ACTION == "Y" ]]
         then
-            docker exec -it darbit_docker_webserver /bin/bash -c "certbot --nginx -d $SITE_NAME -d www.$SITE_NAME"
+            docker exec -it docker-bitrix_webserver /bin/bash -c "certbot --nginx -d $SITE_NAME -d www.$SITE_NAME"
 
             DOCKER_FOLDER_PATH=$DOCKER_PATH/docker-bitrix
             mv $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf.old && \
@@ -242,8 +242,8 @@ then
 
     PROJECT_CLEARED_NAME=`echo $SITE_NAME | tr "." "_" | tr "-" "_"`
     DATABASE_NAME=$PROJECT_CLEARED_NAME"_db"
-    DATABASE_USER=$PROJECT_CLEARED_NAME"_user"
-    DATABASE_PASSWORD=$(openssl rand -base64 32)
+    DATABASE_USER="db_user"
+    DATABASE_PASSWORD="db_password"
     sleep 5
     mysql --defaults-extra-file=$MYSQL_AUTH_FILE -P 3306 --protocol=tcp -e "CREATE DATABASE $DATABASE_NAME; CREATE USER '$DATABASE_USER'@'%' IDENTIFIED BY '$DATABASE_PASSWORD'; GRANT ALL PRIVILEGES ON $DATABASE_NAME.* TO '$DATABASE_USER'@'%'; FLUSH PRIVILEGES;"
 
